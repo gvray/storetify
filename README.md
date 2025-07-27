@@ -1,13 +1,13 @@
 <div align="center">
 
-![Build Status](https://github.com/GavinBirkhoff/storetify/actions/workflows/node-ci.yml/badge.svg)
-[![codecov](https://codecov.io/github/GavinBirkhoff/storetify/branch/main/graph/badge.svg)](https://codecov.io/github/GavinBirkhoff/storetify)
+![Build Status](https://github.com/gvray/storetify/actions/workflows/node-ci.yml/badge.svg)
+[![codecov](https://codecov.io/github/gvray/storetify/branch/main/graph/badge.svg)](https://codecov.io/github/gvray/storetify)
 ![license](https://img.shields.io/github/license/gavinbirkhoff/storetify)
 ![release](https://img.shields.io/github/release/gavinbirkhoff/storetify.svg)
 
 </div>
 
-English | [简体中文](https://github.com/GavinBirkhoff/storetify/blob/main/README.zh-CN.md)
+English | [简体中文](https://github.com/gvray/storetify/blob/main/README.zh-CN.md)
 
 The encapsulation of local storage localStorage, provides expiration time setting and subscription functions, provides simple API use, no dependencies, and the compression is only 3.71KB (gzipped: 1.37KB).
 
