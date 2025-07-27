@@ -1,5 +1,6 @@
 import NextStorage from "./NextStorage"
 import { Storetify, StoreArgument, StoreStage, StoretifyValue } from "./type"
+import { hasBindWindowEventStorage, setBindWindowEventStorage } from "./utils"
 
 const storage = NextStorage.getInstance()
 
@@ -30,19 +31,25 @@ function store(
 }
 
 function init(): Storetify {
+  const skipNames = ["constructor", "getStore"]
   const propertyNames = Object.getOwnPropertyNames(Object.getPrototypeOf(storage))
   propertyNames.forEach(key => {
-    if (key !== "constructor" && key !== "getStore") {
-      const value = storage[key as keyof NextStorage]
-      const storeKey = key as keyof Storetify
-      if (typeof value === "function") {
-        ;(store as any)[storeKey] = value.bind(storage)
-      } else {
-        // store[storeKey] = value
-      }
+    if (skipNames.includes(key)) return
+    const value = storage[key as keyof NextStorage]
+    const storeKey = key as keyof Storetify
+    if (typeof value === "function") {
+      ;(store as any)[storeKey] = value.bind(storage)
+    } else {
+      // store[storeKey] = value
     }
   })
-  ;(store as any).storage = storage
+
+  Object.defineProperty(store, "storage", {
+    value: storage,
+    writable: false,
+    configurable: false,
+    enumerable: false,
+  })
   function dispatchPublish(ev: StorageEvent) {
     const { key, newValue, oldValue, isTrusted } = ev
     if (key !== null && newValue !== oldValue) {
@@ -57,9 +64,9 @@ function init(): Storetify {
       }
     }
   }
-  // SP TODO
-  if (!storage.hasBindWindowEventStorage()) {
-    storage.bindWindowEventStorage(true)
+  // SP
+  if (!hasBindWindowEventStorage()) {
+    setBindWindowEventStorage(true)
 
     const handleStorageChange = (e: StorageEvent) => {
       dispatchPublish(e)

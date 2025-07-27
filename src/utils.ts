@@ -1,5 +1,24 @@
 import { StoretifyEventValue, StoreListener, StoretifyEvent } from "./type"
 
+const BIND_FLAG = Symbol.for("__storetify_bind_window_event_flag__")
+
+export function getGlobal(): any {
+  if (typeof globalThis !== "undefined") return globalThis
+  if (typeof window !== "undefined") return window
+  // eslint-disable-next-line no-restricted-globals
+  if (typeof self !== "undefined") return self
+  if (typeof global !== "undefined") return global
+  return undefined
+}
+
+export function hasBindWindowEventStorage(): boolean {
+  return !!(getGlobal() as any)[BIND_FLAG]
+}
+
+export function setBindWindowEventStorage(flag: boolean) {
+  ;(getGlobal() as any)[BIND_FLAG] = flag
+}
+
 export function dispatchStorageEvent({
   key,
   newValue,
@@ -10,10 +29,10 @@ export function dispatchStorageEvent({
     key,
     newValue,
     oldValue,
-    url: window.location.href,
+    url: getGlobal().location.href,
     storageArea: localStorage,
   })
-  window?.dispatchEvent(naturalStorageEvent)
+  getGlobal()?.dispatchEvent(naturalStorageEvent)
 }
 
 export function jsonParse(data: string | null) {
@@ -63,4 +82,5 @@ export default {
   dispatchStorageEvent,
   jsonParse,
   each,
+  getGlobal,
 }

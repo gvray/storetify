@@ -1,5 +1,5 @@
 import { StoretifyValue, StoreListener } from "./type"
-import { dispatchStorageEvent, each, isValidKey, jsonParse } from "./utils"
+import { dispatchStorageEvent, each, getGlobal, isValidKey, jsonParse } from "./utils"
 /**
  * NextStorage
  * Next localStorage
@@ -18,7 +18,7 @@ class NextStorage {
   protected constructor(protected store: Storage) {}
 
   // SP
-  public static getInstance(store = window?.localStorage): NextStorage {
+  public static getInstance(store = getGlobal()?.localStorage): NextStorage {
     if (!NextStorage.storage) {
       NextStorage.storage = new NextStorage(store)
     }

@@ -34,7 +34,7 @@ export interface StoreStage {
   has: (key: string) => boolean
   clear: () => void
   subscribe: <T>(key: string, listener: (e: StoretifyEvent<T>) => void) => StoreStage
-  unsubscribe: <T>(keys: string | string[], listener?: (e: StoretifyEvent<T>) => void) => void
+  unsubscribe: <T>(keys?: string | string[], listener?: (e: StoretifyEvent<T>) => void) => void
   getObserver(key: string): StoreListener[]
   getUsed: () => string
 }
