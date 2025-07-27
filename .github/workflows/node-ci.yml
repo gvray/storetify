@@ -18,6 +18,11 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
       - name: npm run install, build
         run: |
           npm run init
