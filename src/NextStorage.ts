@@ -25,14 +25,6 @@ class NextStorage {
     return NextStorage.storage
   }
 
-  public bindWindowEventStorage(b: boolean) {
-    this.windowEventStorage = b
-  }
-
-  public hasBindWindowEventStorage() {
-    return this.windowEventStorage
-  }
-
   public setNamespace(space: string) {
     this.namespace = space
   }
