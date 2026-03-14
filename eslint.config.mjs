@@ -20,6 +20,7 @@ export default defineConfig([
       '**/example/**',
       '**/*.spec.ts',
       '**/*.test.ts',
+      'playground/**',
     ],
   },
 

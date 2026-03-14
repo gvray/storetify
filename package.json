@@ -9,10 +9,12 @@
   "types": "./dist/storetify.d.ts",
   "scripts": {
     "init": "pnpm install && pnpm run build",
+    "dev": "pnpm --filter playground dev",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "format": "prettier --write .",
     "test": "jest --no-cache",
     "build": "swiftlet build",
+    "build:playground": "pnpm --filter playground build",
     "prepublishOnly": "npm run test && npm run build",
     "pub": "npm publish",
     "prepare": "husky install",
