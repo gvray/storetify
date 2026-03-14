@@ -1,6 +1,6 @@
-import store from "./store"
+import store from './store';
 
-export {
+export type {
   Storetify,
   StoretifyArgument,
   StoretifyListener,
@@ -13,5 +13,5 @@ export {
   StoretifySafeValue,
   StoretifyStoreStage,
   StoretifyStage,
-} from "./type"
-export default store
+} from './type';
+export default store;

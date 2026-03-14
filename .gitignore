@@ -108,3 +108,5 @@ dist
 
 # Mac
 .DS_Store
+
+.lavy-backup/
