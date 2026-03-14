@@ -1,10 +1,7 @@
-const path = require("path")
-const { defineConfig } = require("swiftlet")
+import { defineConfig } from "swiftlet"
 
-const input = path.resolve("./src/", "index.ts")
-
-module.exports = defineConfig({
-  input,
-  target: ["esm", "cjs", "umd"],
+export default defineConfig({
+  entry: "./src/index.ts",
+  format: ["esm", "cjs", "umd"],
   outDir: "./dist",
 })

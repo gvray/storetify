@@ -1,18 +1,25 @@
 import NextStorage from "./NextStorage"
-import { Storetify, StoreArgument, StoreStage, StoretifyValue } from "./type"
+import {
+  Storetify,
+  StoretifyArgument,
+  StoretifyStoreStage,
+  StoretifyValue,
+  StoretifySetterFunction,
+  StoretifySafeValue,
+} from "./type"
 import { hasBindWindowEventStorage, setBindWindowEventStorage } from "./utils"
 
 const storage = NextStorage.getInstance()
 
-function store<T extends StoretifyValue | ((...args: any) => StoretifyValue)>(
+function store<T = StoretifyValue>(key: string): StoretifySafeValue<T>
+function store<T extends StoretifyValue | StoretifySetterFunction>(
   key: string,
   value: T,
   expires?: number,
-): StoreStage
-function store<T = StoretifyValue>(key: string): T
-function store(
-  ...rest: StoreArgument<StoretifyValue | ((...args: any) => StoretifyValue)>
-): StoretifyValue | StoreStage {
+): StoretifyStoreStage
+function store<T = StoretifyValue>(
+  ...rest: StoretifyArgument<StoretifyValue | StoretifySetterFunction>
+): StoretifySafeValue<T> | StoretifyStoreStage {
   const len = rest.length
   const [key, value, expires] = rest
   if (len === 1 && typeof key === "string") {
@@ -20,12 +27,12 @@ function store(
   }
   if (len >= 2 && typeof key === "string") {
     if (value === undefined) {
-      return storage.remove(key) as unknown as StoreStage
+      return storage.remove(key) as unknown as StoretifyStoreStage
     }
     if (typeof value === "function") {
-      return storage.set(key, value(), expires) as unknown as StoreStage
+      return storage.set(key, value(), expires) as unknown as StoretifyStoreStage
     }
-    return storage.set(key, value, expires) as unknown as StoreStage
+    return storage.set(key, value, expires) as unknown as StoretifyStoreStage
   }
   return null
 }
@@ -38,9 +45,7 @@ function init(): Storetify {
     const value = storage[key as keyof NextStorage]
     const storeKey = key as keyof Storetify
     if (typeof value === "function") {
-      ;(store as any)[storeKey] = value.bind(storage)
-    } else {
-      // store[storeKey] = value
+      ;(store as Record<string, any>)[storeKey] = value.bind(storage)
     }
   })
 

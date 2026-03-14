@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import NextStorage from "../NextStorage"
 
 // JSON SAFE
@@ -8,54 +9,48 @@ export interface JSONObject {
   [key: string]: StoretifyValue
 }
 
-// eslint-disable-next-line no-use-before-define
 export type JSONArray = Array<StoretifyValue>
 
 export type StoretifySafeValue<T = StoretifyValue> = T | null
-export type StoreArgument<T extends StoretifyValue | ((...rest: any) => StoretifyValue)> = [string, T?, number?]
+export type StoretifySetterFunction<T = StoretifyValue> = (...args: any[]) => StoretifySafeValue<T>
+export type StoretifyArgument<T extends StoretifyValue | StoretifySetterFunction> = [string, T?, number?]
 
-export type StoretifyEventValue = StoretifyValue
-export interface StoretifyEvent<T = StoretifyEventValue> extends Omit<StorageEvent, "newValue" | "oldValue"> {
-  newValue: T
-  oldValue: T
+export interface StoretifyEvent<T = StoretifyValue> extends Omit<StorageEvent, "newValue" | "oldValue"> {
+  newValue: StoretifySafeValue<T>
+  oldValue: StoretifySafeValue<T>
   native: StorageEvent
 }
-export type StoreListener = (e: any) => void
+export type StoretifyListener<T = StoretifyValue> = (e: StoretifyEvent<T>) => void
 
-export interface StoreStage {
+export interface StoretifyStoreStage {
   storage: NextStorage
   set: <T = StoretifyValue>(
     key: string,
-    value: StoretifySafeValue<T> | ((...rest: any) => StoretifySafeValue<T>),
+    value: StoretifySafeValue<T> | StoretifySetterFunction<T>,
     expires?: number,
-  ) => StoreStage
+  ) => StoretifyStoreStage
   get: <T = StoretifyValue>(key: string) => StoretifySafeValue<T>
-  remove: (key: string, soft?: boolean) => StoreStage
+  remove: (key: string, soft?: boolean) => StoretifyStoreStage
   has: (key: string) => boolean
   clear: () => void
-  subscribe: <T>(key: string, listener: (e: StoretifyEvent<T>) => void) => StoreStage
-  unsubscribe: <T>(keys?: string | string[], listener?: (e: StoretifyEvent<T>) => void) => void
-  getObserver(key: string): StoreListener[]
+  subscribe: <T = StoretifyValue>(key: string, listener: StoretifyListener<T>) => StoretifyStoreStage
+  unsubscribe: <T = StoretifyValue>(keys?: string | string[], listener?: StoretifyListener<T>) => void
+  getObserver<T = StoretifyValue>(key: string): StoretifyListener<T>[]
   getUsed: () => string
 }
 
-// StoreStage Partial
-export interface StoretifyStage extends Partial<StoreStage> {
-  <T extends StoretifyValue | ((...args: any) => StoretifySafeValue<T>)>(
-    key: string,
-    value: T,
-    expires?: number,
-  ): StoreStage
+export interface StoretifyStage extends Partial<StoretifyStoreStage> {
+  <T extends StoretifyValue | StoretifySetterFunction<T>>(key: string, value: T, expires?: number): StoretifyStoreStage
   <T = StoretifyValue>(key: string): StoretifySafeValue<T>
-  <T>(...rest: StoreArgument<StoretifyValue | ((...args: any) => StoretifyValue)>): StoretifySafeValue<T> | StoreStage
+  <T = StoretifyValue>(...rest: StoretifyArgument<StoretifyValue | StoretifySetterFunction>):
+    | StoretifySafeValue<T>
+    | StoretifyStoreStage
 }
 
-export interface Storetify extends StoreStage {
-  <T extends StoretifyValue | ((...args: any) => StoretifySafeValue<T>)>(
-    key: string,
-    value: T,
-    expires?: number,
-  ): StoreStage
+export interface Storetify extends StoretifyStoreStage {
+  <T extends StoretifyValue | StoretifySetterFunction<T>>(key: string, value: T, expires?: number): StoretifyStoreStage
   <T = StoretifyValue>(key: string): StoretifySafeValue<T>
-  <T>(...rest: StoreArgument<StoretifyValue | ((...args: any) => StoretifyValue)>): StoretifySafeValue<T> | StoreStage
+  <T = StoretifyValue>(...rest: StoretifyArgument<StoretifyValue | StoretifySetterFunction>):
+    | StoretifySafeValue<T>
+    | StoretifyStoreStage
 }

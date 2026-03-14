@@ -1,4 +1,4 @@
-import { StoretifyEventValue, StoreListener, StoretifyEvent } from "./type"
+import { StoretifyValue, StoretifyListener, StoretifyEvent } from "./type"
 
 const BIND_FLAG = Symbol.for("__storetify_bind_window_event_flag__")
 
@@ -29,20 +29,26 @@ export function dispatchStorageEvent({
     key,
     newValue,
     oldValue,
-    url: getGlobal().location.href,
+    url: getGlobal()?.location?.href,
     storageArea: localStorage,
   })
   getGlobal()?.dispatchEvent(naturalStorageEvent)
 }
 
 export function jsonParse(data: string | null) {
-  const dest = data === "undefined" || data === undefined ? null : data
-  return JSON.parse(dest as string)
+  if (data === null || data === "undefined" || data === undefined) {
+    return null
+  }
+  try {
+    return JSON.parse(data)
+  } catch {
+    return null
+  }
 }
 
-export function each(funcs: StoreListener[], ev: StorageEvent, defaultKey: string | null) {
-  let newValue: StoretifyEventValue = null
-  let oldValue: StoretifyEventValue = null
+export function each(funcs: StoretifyListener[], ev: StorageEvent, defaultKey: string | null) {
+  let newValue: StoretifyValue | null = null
+  let oldValue: StoretifyValue | null = null
   try {
     newValue = jsonParse(ev.newValue)?.value ?? newValue
     oldValue = jsonParse(ev.oldValue)?.value ?? oldValue
@@ -59,7 +65,7 @@ export function each(funcs: StoreListener[], ev: StorageEvent, defaultKey: strin
     native: ev,
   } as StoretifyEvent
 
-  funcs.forEach((func: StoreListener) => {
+  funcs.forEach((func: StoretifyListener) => {
     if (typeof func === "function") {
       try {
         func(mutationalStorageEvent)

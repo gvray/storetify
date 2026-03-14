@@ -74,7 +74,7 @@
     "rollup-plugin-filesize": "^9.1.2",
     "rollup-plugin-license": "^2.8.1",
     "rollup-plugin-sourcemaps": "^0.6.3",
-    "swiftlet": "1.0.0-Alpha.4",
+    "swiftlet": "^1.2.2",
     "ts-jest": "^28.0.5",
     "tslib": "^1.14.1",
     "typescript": "^4.7.4"

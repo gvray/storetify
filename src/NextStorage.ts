@@ -1,4 +1,4 @@
-import { StoretifyValue, StoreListener } from "./type"
+import { StoretifyValue, StoretifyListener } from "./type"
 import { dispatchStorageEvent, each, getGlobal, isValidKey, jsonParse } from "./utils"
 /**
  * NextStorage
@@ -7,7 +7,7 @@ import { dispatchStorageEvent, each, getGlobal, isValidKey, jsonParse } from "./
 class NextStorage {
   namespace = "storetify"
 
-  protected observers = new Map()
+  protected observers = new Map<string, StoretifyListener[]>()
 
   protected windowEventStorage = false
 
@@ -34,7 +34,16 @@ class NextStorage {
   }
 
   public getUsed() {
-    const storageUsed = JSON.stringify(this.getStore()).length / 1024
+    let totalSize = 0
+    const store = this.getStore()
+    for (let i = 0; i < store.length; i++) {
+      const key = store.key(i)
+      if (key) {
+        const value = store.getItem(key)
+        totalSize += key.length + (value?.length || 0)
+      }
+    }
+    const storageUsed = totalSize / 1024
     return `${storageUsed.toFixed(3)} KB`
   }
 
@@ -63,9 +72,9 @@ class NextStorage {
     if (val === null) {
       return val
     }
-    const value = jsonParse(val)
-    if (!value.expires || Date.now() <= value.expires) {
-      return value.value
+    const parsed = jsonParse(val)
+    if (parsed && (!parsed.expires || Date.now() <= parsed.expires)) {
+      return parsed.value
     }
     // only del store key without listeners
     this.remove(key, true)
@@ -77,8 +86,8 @@ class NextStorage {
     if (val === null) {
       return val
     }
-    const value = jsonParse(val)
-    if (!value.expires || Date.now() <= value.expires) {
+    const parsed = jsonParse(val)
+    if (parsed && (!parsed.expires || Date.now() <= parsed.expires)) {
       return val
     }
     // this.remove(key) only read value
@@ -92,13 +101,13 @@ class NextStorage {
   }
 
   public publish(
-    observers: StoreListener[] | string,
+    observers: StoretifyListener[] | string,
     e: StorageEvent,
     force = false,
     defaultKey: string | null = null,
   ) {
     // force publish without ask observers
-    if (!observers && !force && !this.has(observers)) return
+    if (!force && typeof observers === "string" && !this.has(observers)) return
 
     if (Array.isArray(observers)) {
       each(observers, e, defaultKey)
@@ -109,28 +118,27 @@ class NextStorage {
   }
 
   public publishAll(e: StorageEvent) {
-    this.observers.forEach((item: StoreListener[], key: string) => {
+    this.observers.forEach((item: StoretifyListener[], key: string) => {
       this.publish(item, e, true, key)
     })
   }
 
-  public subscribe(key: string, listener: StoreListener) {
+  public subscribe(key: string, listener: StoretifyListener) {
     const { observers } = this
     const listeners = observers.get(key)
     if (listeners) {
       listeners.push(listener)
-      // this.observers.set(key, listeners)
     } else {
       this.observers.set(key, [listener])
     }
     return this
   }
 
-  public getObserver(key: string): StoreListener[] {
+  public getObserver(key: string): StoretifyListener[] {
     return this.observers.get(key) ?? []
   }
 
-  public unsubscribe(keys?: string | string[], listener?: StoreListener) {
+  public unsubscribe(keys?: string | string[], listener?: StoretifyListener) {
     if (Array.isArray(keys)) {
       keys.forEach(key => {
         this.observers.delete(key)
@@ -138,7 +146,7 @@ class NextStorage {
     } else if (typeof keys === "string" && listener) {
       let listeners = this.observers.get(keys)
       if (listener.name && listeners) {
-        listeners = listeners.filter((item: StoreListener) => item.name !== listener.name)
+        listeners = listeners.filter((item: StoretifyListener) => item.name !== listener.name)
         this.observers.set(keys, listeners)
       }
     } else if (typeof keys === "string") {
