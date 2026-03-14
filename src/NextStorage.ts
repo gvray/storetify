@@ -139,20 +139,36 @@ class NextStorage {
   }
 
   public unsubscribe(keys?: string | string[], listener?: StoretifyListener) {
-    if (Array.isArray(keys)) {
+    if (keys === undefined || keys === null) {
+      // 没有 keys，清空所有 observers
+      this.observers.clear()
+    } else if (Array.isArray(keys)) {
+      // keys 是数组，删除数组中的每个 key（空数组不会删除任何内容）
       keys.forEach(key => {
         this.observers.delete(key)
       })
     } else if (typeof keys === "string" && listener) {
-      let listeners = this.observers.get(keys)
-      if (listener.name && listeners) {
-        listeners = listeners.filter((item: StoretifyListener) => item.name !== listener.name)
-        this.observers.set(keys, listeners)
+      // keys 是字符串且有 listener，删除该 key 对应的特定 listener
+      const listeners = this.observers.get(keys)
+      if (listeners) {
+        const filtered = listeners.filter((item: StoretifyListener) => {
+          // 通过引用匹配删除
+          if (item === listener) return false
+          // 如果引用不同，但有显式设置的名称（非空且非默认值），则通过名称匹配
+          if (listener.name && listener.name !== "mockConstructor" && item.name === listener.name) {
+            return false
+          }
+          return true
+        })
+        if (filtered.length > 0) {
+          this.observers.set(keys, filtered)
+        } else {
+          this.observers.delete(keys)
+        }
       }
     } else if (typeof keys === "string") {
+      // keys 是字符串但没有 listener，删除该 key 的所有 listeners
       this.observers.delete(keys)
-    } else {
-      this.observers.clear()
     }
   }
 

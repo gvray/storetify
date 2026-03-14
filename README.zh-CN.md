@@ -1,13 +1,13 @@
 <div align="center">
 
-![Build Status](https://github.com/GavinBirkhoff/storetify/actions/workflows/node-ci.yml/badge.svg)
-[![codecov](https://codecov.io/github/GavinBirkhoff/storetify/branch/main/graph/badge.svg)](https://codecov.io/github/GavinBirkhoff/storetify)
-![license](https://img.shields.io/github/license/gavinbirkhoff/storetify)
-![release](https://img.shields.io/github/release/gavinbirkhoff/storetify.svg)
+![Build Status](https://github.com/gvray/storetify/actions/workflows/node-ci.yml/badge.svg)
+[![codecov](https://codecov.io/github/gvray/storetify/branch/main/graph/badge.svg)](https://codecov.io/github/gvray/storetify)
+![license](https://img.shields.io/github/license/gvray/storetify)
+![release](https://img.shields.io/github/release/gvray/storetify.svg)
 
 </div>
 
-[English](https://github.com/GavinBirkhoff/storetify/blob/main/README.md) | 简体中文
+[English](https://github.com/gvray/storetify/blob/main/README.md) | 简体中文
 
 🦄本地存储localStorage的封装，提供过期时间设置和订阅功能，提供简单API使用，没有依赖，压缩只有 3.81KB(gzipped: 1.39KB)。
 
