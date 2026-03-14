@@ -1,17 +1,34 @@
-# React + TypeScript + Vite
+# Storetify Playground
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interactive playground for testing [storetify](https://github.com/gvray/storetify) features.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- 💾 **Set/Get/Remove** - Basic storage operations
+- ⏰ **Expiration** - Auto-expire data after specified time
+- 👂 **Subscribe** - Listen to storage change events
+- 🧹 **Clear** - Clear all storage data
+- 📊 **Storage Info** - Check storage usage
 
-## React Compiler
+## Quick Start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# From root directory
+pnpm dev
 
-## Expanding the ESLint configuration
+# Or from playground directory
+cd playground
+pnpm dev
+```
+
+Visit http://localhost:5173
+
+## Tech Stack
+
+- React 19 + TypeScript
+- Vite 7
+- Tailwind CSS 3
+- Storetify (workspace:*)
 
 If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
