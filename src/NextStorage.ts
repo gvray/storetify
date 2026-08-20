@@ -93,9 +93,10 @@ class NextStorage {
   }
 
   public has(key: string): boolean {
-    const val = this.getStore().getItem(key);
+    const val = this.getStore().getItem(key) ?? null;
     if (val === null) return false;
-    return true;
+    const parsed = jsonParse(val);
+    return parsed !== null && (!parsed.expires || Date.now() <= parsed.expires);
   }
 
   public publish(

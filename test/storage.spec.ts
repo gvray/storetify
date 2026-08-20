@@ -36,13 +36,15 @@ describe('Storage Operations', () => {
       expect(storage.getItem('getitem-expire')).toBe(null);
     }, 3000);
 
-    test('should check has() correctly for expired items', () => {
+    test('should check has() correctly for expired items', async () => {
       store.set('has-expire', 'value', 0.5);
       expect(store.has('has-expire')).toBe(true);
 
-      // Note: has() returns true even if expired (by design)
-      // Only get() checks expiration
-    });
+      await new Promise((resolve) => setTimeout(resolve, 600));
+
+      // has() should return false for expired items, consistent with get()
+      expect(store.has('has-expire')).toBe(false);
+    }, 3000);
   });
 
   describe('Data Persistence', () => {
