@@ -10,7 +10,7 @@
 
 **Better localStorage with expiration, subscription, and full TypeScript support**
 
-[English](#) | [简体中文](./README_CN.md)
+[English](#) | [简体中文](./README.zh-CN.md)
 
 </div>
 
