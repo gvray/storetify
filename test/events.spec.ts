@@ -292,7 +292,7 @@ describe('Event System', () => {
 
   describe('Publish Mechanism', () => {
     test('should not publish when key does not exist and force is false', () => {
-      const { storage } = store as any;
+      const { storage } = store;
       const mockEvent = {
         key: 'non-existent-key',
         newValue: JSON.stringify({ value: 'new', expires: null }),
@@ -329,8 +329,33 @@ describe('Event System', () => {
         isTrusted: true,
       } as StorageEvent;
 
-      (store as any).storage.publish([mockListener], mockEvent, true);
+      store.storage.publish([mockListener], mockEvent, true);
       expect(mockListener).toHaveBeenCalled();
+    });
+
+    test('should use default force=false in publish', () => {
+      const { storage } = store;
+      const mockEvent = {
+        key: 'default-force-key',
+        newValue: JSON.stringify({ value: 'new', expires: null }),
+        oldValue: JSON.stringify({ value: 'old', expires: null }),
+        type: 'storage',
+        url: window.location.href,
+        isTrusted: true,
+      } as StorageEvent;
+
+      const originalHas = storage.has;
+      const originalGetObserver = storage.getObserver;
+
+      storage.has = jest.fn(() => false);
+      storage.getObserver = jest.fn(() => []);
+
+      // call without force argument, should default to false
+      storage.publish('default-force-key', mockEvent);
+      expect(storage.getObserver).not.toHaveBeenCalled();
+
+      storage.has = originalHas;
+      storage.getObserver = originalGetObserver;
     });
 
     test('should publish to all observers', () => {
@@ -349,7 +374,7 @@ describe('Event System', () => {
         isTrusted: true,
       } as StorageEvent;
 
-      (store as any).storage.publishAll(mockEvent);
+      store.storage.publishAll(mockEvent);
 
       expect(listener1).toHaveBeenCalled();
       expect(listener2).toHaveBeenCalled();

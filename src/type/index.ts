@@ -54,9 +54,9 @@ export interface StoretifyApi extends StorageEngine {
 }
 
 export interface Storetify extends StoretifyApi {
-  <T extends StoretifyValue | StoretifySetter<T>>(
+  <T extends StoretifyValue>(
     key: string,
-    value: T,
+    value: T | StoretifySetter<T>,
     expires?: number
   ): StoretifyApi;
   <T = StoretifyValue>(key: string): StoretifyValueOrNull<T>;

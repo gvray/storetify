@@ -18,13 +18,13 @@ function resolveStoreValue<T = StoretifyValue>(
   return typeof value === 'function' ? (value as StoretifySetter<T>)() : value;
 }
 
-function storeImpl<T = StoretifyValue>(key: string): StoretifyValueOrNull<T>;
-function storeImpl<T extends StoretifyValue | StoretifySetter>(
+function storeImpl<T = StoretifyValue>(key: string): T | null;
+function storeImpl<T extends StoretifyValue>(
   key: string,
-  value: T,
+  value: T | StoretifySetter<T>,
   expires?: number
 ): StoretifyApi;
-function storeImpl(...rest: StoretifyArgs): StoretifyValueOrNull | StoretifyApi {
+function storeImpl(...rest: StoretifyArgs): StoretifyValue | null | StoretifyApi {
   const len = rest.length;
   const [key, value, expires] = rest;
   if (len === 1 && typeof key === 'string') {
@@ -51,11 +51,12 @@ function init(): Storetify {
     const value = storage[key as keyof NextStorage];
     const storeKey = key as keyof Storetify;
     if (typeof value === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (store as Record<string, any>)[storeKey] = value.bind(storage);
     }
   });
 
-  // set 需要单独处理：支持惰性求值函数
+  // set 需要单独处理：支持惰性求值函数，对外返回 StoretifyApi
   store.set = <T = StoretifyValue>(
     key: string,
     value: StoretifyValueOrNull<T> | StoretifySetter<T>,

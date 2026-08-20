@@ -1,5 +1,6 @@
 import { StorageEngine, StoretifyValue, StoretifyListener } from './type';
-import { dispatchStorageEvent, each, getGlobal, isValidKey, jsonParse } from './utils';
+import { dispatchStorageEvent, notifyListeners, getGlobal, isValidKey, jsonParse } from './utils';
+
 /**
  * NextStorage
  * Next localStorage
@@ -18,7 +19,7 @@ class NextStorage implements StorageEngine {
   // SP
   public static getInstance(store = getGlobal()?.localStorage): NextStorage {
     if (!NextStorage.storage) {
-      NextStorage.storage = new NextStorage(store);
+      NextStorage.storage = new NextStorage(store!);
     }
     return NextStorage.storage;
   }
@@ -99,19 +100,19 @@ class NextStorage implements StorageEngine {
   }
 
   public publish(
-    observers: StoretifyListener[] | string,
+    observersOrKey: StoretifyListener[] | string,
     e: StorageEvent,
     force = false,
     defaultKey: string | null = null
   ) {
     // force publish without ask observers
-    if (!force && typeof observers === 'string' && !this.has(observers)) return;
+    if (!force && typeof observersOrKey === 'string' && !this.has(observersOrKey)) return;
 
-    if (Array.isArray(observers)) {
-      each(observers, e, defaultKey);
+    if (Array.isArray(observersOrKey)) {
+      notifyListeners(observersOrKey, e, defaultKey);
     } else {
-      const storeListeners = this.getObserver(observers);
-      each(storeListeners, e, defaultKey);
+      const storeListeners = this.getObserver(observersOrKey);
+      notifyListeners(storeListeners, e, defaultKey);
     }
   }
 

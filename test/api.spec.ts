@@ -1,4 +1,5 @@
 import store from '../src/index';
+import NextStorage from '../src/NextStorage';
 
 describe('Core API', () => {
   beforeEach(() => {
@@ -56,7 +57,7 @@ describe('Core API', () => {
   describe('Shorthand store() Syntax', () => {
     test('should return null for invalid arguments', () => {
       // Call store with no arguments should return null
-      const result = (store as any)();
+      const result = (store as unknown as () => null)();
       expect(result).toBe(null);
     });
 
@@ -103,8 +104,9 @@ describe('Core API', () => {
   describe('Namespace Management', () => {
     test('should set and get namespace', () => {
       const namespace = 'my-app';
-      (store as any).setNamespace(namespace);
-      expect((store as any).getNamespace()).toBe(namespace);
+      const storage = store.storage as NextStorage;
+      storage.setNamespace(namespace);
+      expect(storage.getNamespace()).toBe(namespace);
     });
   });
 
@@ -153,16 +155,17 @@ describe('Core API', () => {
         clear: jest.fn(),
         length: 0,
         key: jest.fn(() => null),
-      } as any;
+      } as unknown as Storage;
 
-      const originalStore = (store as any).storage.getStore();
-      (store as any).storage.setStore(mockStore);
+      const storage = store.storage as NextStorage;
+      const originalStore = storage.getStore();
+      storage.setStore(mockStore);
 
       store.set('custom-store-test', 'value');
       expect(mockStore.setItem).toHaveBeenCalled();
 
       // Restore original storage
-      (store as any).storage.setStore(originalStore);
+      storage.setStore(originalStore);
     });
   });
 });

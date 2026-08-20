@@ -1,4 +1,5 @@
 import store from '../src/index';
+import NextStorage from '../src/NextStorage';
 
 describe('Storage Operations', () => {
   beforeEach(() => {
@@ -27,7 +28,7 @@ describe('Storage Operations', () => {
     }, 7000);
 
     test('should return null from getItem for expired values', async () => {
-      const storage = (store as any).storage;
+      const { storage } = store;
       storage.set('getitem-expire', 'value', 1);
 
       await new Promise((resolve) => setTimeout(resolve, 1100));
@@ -111,7 +112,7 @@ describe('Storage Operations', () => {
       store.subscribe('soft-remove-test', listener);
 
       // Soft remove via internal API
-      (store as any).storage.remove('soft-remove-test', true);
+      store.storage.remove('soft-remove-test', true);
 
       expect(store.get('soft-remove-test')).toBe(null);
       // Subscribers should still exist with soft remove
@@ -150,6 +151,39 @@ describe('Storage Operations', () => {
       for (let i = 0; i < 100; i++) {
         expect(store.get(`rapid-${i}`)).toBe(i);
       }
+    });
+
+    test('should handle getItem returning null in getUsed', () => {
+      const storage = store.storage as NextStorage;
+      const mockStore = {
+        getItem: jest.fn(() => null),
+        setItem: jest.fn(),
+        removeItem: jest.fn(),
+        clear: jest.fn(),
+        length: 1,
+        key: jest.fn(() => 'mock-key'),
+      } as unknown as Storage;
+
+      const originalStore = storage.getStore();
+      storage.setStore(mockStore);
+
+      const used = storage.getUsed();
+      expect(used).toMatch(/KB$/);
+
+      storage.setStore(originalStore);
+    });
+
+    test('should return null for invalid JSON stored values', () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      localStorage.setItem('bad-json', 'not-valid-json');
+      expect(store.get('bad-json')).toBe(null);
+      expect(store.has('bad-json')).toBe(false);
+      consoleWarnSpy.mockRestore();
+    });
+
+    test('should handle removing non-existent key', () => {
+      expect(() => store.storage.remove('non-existent-key')).not.toThrow();
+      expect(store.get('non-existent-key')).toBe(null);
     });
   });
 });

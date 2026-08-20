@@ -91,7 +91,7 @@ const t:自定义类型 = store.get("test");
 
 store("test"); // 功能同上
 // 或者
-const t:自定义类型 = store.("test");
+const t:自定义类型 = store("test");
 ```
 
 ### remove

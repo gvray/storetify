@@ -2,6 +2,21 @@ import { jsonParse, dispatchStorageEvent, getGlobal, isValidKey } from '../src/u
 import store from '../src/index';
 
 describe('Utility Functions', () => {
+  const originalWarn = console.warn;
+
+  beforeAll(() => {
+    console.warn = (...args: unknown[]) => {
+      if (typeof args[0] === 'string' && args[0].startsWith('[storetify] jsonParse failed')) {
+        return;
+      }
+      originalWarn.apply(console, args);
+    };
+  });
+
+  afterAll(() => {
+    console.warn = originalWarn;
+  });
+
   beforeEach(() => {
     store.clear();
   });
@@ -17,10 +32,10 @@ describe('Utility Functions', () => {
 
   describe('Key Validation', () => {
     test('should throw for invalid key types', () => {
-      expect(() => isValidKey(123 as any)).toThrow('store key must be a string');
-      expect(() => isValidKey(null as any)).toThrow('store key must be a string');
-      expect(() => isValidKey(undefined as any)).toThrow('store key must be a string');
-      expect(() => isValidKey({} as any)).toThrow('store key must be a string');
+      expect(() => isValidKey(123)).toThrow('store key must be a string');
+      expect(() => isValidKey(null)).toThrow('store key must be a string');
+      expect(() => isValidKey(undefined)).toThrow('store key must be a string');
+      expect(() => isValidKey({})).toThrow('store key must be a string');
     });
 
     test('should not throw for valid string keys', () => {
@@ -48,7 +63,7 @@ describe('Utility Functions', () => {
     });
 
     test('should handle undefined input', () => {
-      const result = jsonParse(undefined as any);
+      const result = jsonParse(undefined);
       expect(result).toBe(null);
     });
 
@@ -191,7 +206,7 @@ describe('Utility Functions', () => {
         isTrusted: true,
       } as StorageEvent;
 
-      (store as any).storage.publish([mockListener], mockEvent, true, 'error-test');
+      store.storage.publish([mockListener], mockEvent, true, 'error-test');
 
       // jsonParse now has try-catch, so listener should still be called with null values
       expect(mockListener).toHaveBeenCalled();

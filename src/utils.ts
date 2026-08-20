@@ -1,22 +1,30 @@
-import { StoretifyValueOrNull, StoretifyListener, StoretifyEvent } from './type';
+import { StoretifyListener, StoretifyEvent } from './type';
+
+declare const process: { env: { NODE_ENV?: string } } | undefined;
 
 const BIND_FLAG = Symbol.for('__storetify_bind_window_event_flag__');
 
-export function getGlobal(): any {
+export function getGlobal(): typeof globalThis | undefined {
   if (typeof globalThis !== 'undefined') return globalThis;
   if (typeof window !== 'undefined') return window;
-
   if (typeof self !== 'undefined') return self;
-  if (typeof global !== 'undefined') return global;
+
+  // global is Node-only; access via globalThis to avoid missing identifier in browser-only types
+  const globalObj = globalThis as typeof globalThis & { global?: typeof globalThis };
+  if (typeof globalObj.global !== 'undefined') return globalObj.global;
   return undefined;
 }
 
 export function hasBindWindowEventStorage(): boolean {
-  return !!(getGlobal() as any)[BIND_FLAG];
+  const globalObj = getGlobal() as Record<symbol, boolean> | undefined;
+  return globalObj ? !!globalObj[BIND_FLAG] : false;
 }
 
 export function setBindWindowEventStorage(flag: boolean) {
-  (getGlobal() as any)[BIND_FLAG] = flag;
+  const globalObj = getGlobal() as Record<symbol, boolean> | undefined;
+  if (globalObj) {
+    globalObj[BIND_FLAG] = flag;
+  }
 }
 
 export function dispatchStorageEvent(
@@ -27,7 +35,7 @@ export function dispatchStorageEvent(
     key,
     newValue,
     oldValue,
-    url: getGlobal()?.location?.href,
+    url: getGlobal()?.location?.href ?? '',
   };
 
   let naturalStorageEvent: StorageEvent;
@@ -44,26 +52,29 @@ export function dispatchStorageEvent(
   getGlobal()?.dispatchEvent(naturalStorageEvent);
 }
 
-export function jsonParse(data: string | null) {
+export function jsonParse(data: string | null | undefined) {
   if (data === null || data === 'undefined' || data === undefined) {
     return null;
   }
   try {
     return JSON.parse(data);
-  } catch {
+  } catch (error) {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      const preview =
+        typeof data === 'string' && data.length > 100 ? `${data.slice(0, 100)}...` : data;
+      console.warn(`[storetify] jsonParse failed: ${error}, data: ${preview}`);
+    }
     return null;
   }
 }
 
-export function each(funcs: StoretifyListener[], ev: StorageEvent, defaultKey: string | null) {
-  let newValue: StoretifyValueOrNull = null;
-  let oldValue: StoretifyValueOrNull = null;
-  try {
-    newValue = jsonParse(ev.newValue)?.value ?? newValue;
-    oldValue = jsonParse(ev.oldValue)?.value ?? oldValue;
-  } catch (error) {
-    console.warn(`has an exception in your json parse, from ${ev.url}, .eg ${error}`);
-  }
+export function notifyListeners(
+  funcs: StoretifyListener[],
+  ev: StorageEvent,
+  defaultKey: string | null
+) {
+  const newValue = jsonParse(ev.newValue)?.value ?? null;
+  const oldValue = jsonParse(ev.oldValue)?.value ?? null;
   const mutationalStorageEvent = {
     type: ev.type,
     key: ev.key === null ? defaultKey : ev.key,
@@ -96,6 +107,6 @@ export function isValidKey(key: unknown): asserts key is string {
 export default {
   dispatchStorageEvent,
   jsonParse,
-  each,
+  notifyListeners,
   getGlobal,
 };
