@@ -1,3 +1,4 @@
+import { TextEncoder } from 'util';
 import store from '../src/index';
 import NextStorage from '../src/NextStorage';
 
@@ -120,15 +121,23 @@ describe('Core API', () => {
     });
 
     test('should calculate byte size for non-ASCII characters', () => {
-      store.set('usage-test-ascii', 'aaaa');
-      const asciiUsed = parseFloat(store.getUsed());
+      const globalAny = globalThis as typeof globalThis & { TextEncoder?: typeof TextEncoder };
+      const originalTextEncoder = globalAny.TextEncoder;
+      globalAny.TextEncoder = TextEncoder;
 
-      store.clear();
-      store.set('usage-test-unicode', '中文字符');
-      const unicodeUsed = parseFloat(store.getUsed());
+      try {
+        store.set('usage-test-ascii', 'aaaa');
+        const asciiUsed = parseFloat(store.getUsed());
 
-      // 中文 UTF-8 每个字符占 3 字节，所以 unicodeUsed 应该明显大于 asciiUsed
-      expect(unicodeUsed).toBeGreaterThan(asciiUsed);
+        store.clear();
+        store.set('usage-test-unicode', '中文字符');
+        const unicodeUsed = parseFloat(store.getUsed());
+
+        // 中文 UTF-8 每个字符占 3 字节，所以 unicodeUsed 应该明显大于 asciiUsed
+        expect(unicodeUsed).toBeGreaterThan(asciiUsed);
+      } finally {
+        globalAny.TextEncoder = originalTextEncoder;
+      }
     });
 
     test('should get observers for a key', () => {

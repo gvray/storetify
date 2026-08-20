@@ -4,6 +4,13 @@ declare const process: { env: { NODE_ENV?: string } } | undefined;
 
 const BIND_FLAG = Symbol.for('__storetify_bind_window_event_flag__');
 
+export function getByteSize(str: string): number {
+  if (typeof TextEncoder !== 'undefined') {
+    return new TextEncoder().encode(str).length;
+  }
+  return new Blob([str]).size;
+}
+
 export function getGlobal(): typeof globalThis | undefined {
   if (typeof globalThis !== 'undefined') return globalThis;
   if (typeof window !== 'undefined') return window;

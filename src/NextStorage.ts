@@ -1,5 +1,12 @@
 import { StorageEngine, StoretifyValue, StoretifyListener } from './type';
-import { dispatchStorageEvent, notifyListeners, getGlobal, isValidKey, jsonParse } from './utils';
+import {
+  dispatchStorageEvent,
+  getByteSize,
+  notifyListeners,
+  getGlobal,
+  isValidKey,
+  jsonParse,
+} from './utils';
 
 /**
  * NextStorage
@@ -39,7 +46,7 @@ class NextStorage implements StorageEngine {
       const key = store.key(i);
       if (key) {
         const value = store.getItem(key) ?? '';
-        totalSize += new Blob([key]).size + new Blob([value]).size;
+        totalSize += getByteSize(key) + getByteSize(value);
       }
     }
     const storageUsed = totalSize / 1024;
