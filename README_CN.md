@@ -90,7 +90,7 @@ store
 - `value` (StoretifyValue): 要存储的值（基本类型、对象、数组）
 - `expires` (number, 可选): 过期时间（秒）
 
-**返回值：** `StoretifyStoreStage` 支持链式调用
+**返回值：** `StoretifyApi` 支持链式调用
 
 ---
 
@@ -110,7 +110,7 @@ const expired = store.get('old-key') // null
 
 - `key` (string): 存储键名
 
-**返回值：** `StoretifySafeValue<T>` （值或 null）
+**返回值：** `StoretifyValueOrNull<T>` （值或 null）
 
 ---
 
@@ -126,7 +126,7 @@ store.remove('name')
 
 - `key` (string): 存储键名
 
-**返回值：** `StoretifyStoreStage` 支持链式调用
+**返回值：** `StoretifyApi` 支持链式调用
 
 ---
 
@@ -267,7 +267,7 @@ Storetify 使用 TypeScript 构建，提供完整的类型安全。
 import type { 
   Storetify,
   StoretifyValue,
-  StoretifySafeValue,
+  StoretifyValueOrNull,
   StoretifyEvent,
   StoretifyListener 
 } from 'storetify'
@@ -293,19 +293,13 @@ store.subscribe<User>('user', (event: StoretifyEvent<User>) => {
 ### 支持的类型
 
 ```typescript
-type StoretifyValue = 
-  | string 
-  | number 
-  | boolean 
-  | null 
-  | JSONObject 
-  | JSONArray
-
-interface JSONObject {
-  [key: string]: StoretifyValue
-}
-
-type JSONArray = Array<StoretifyValue>
+type StoretifyValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: StoretifyValue }
+  | Array<StoretifyValue>
 ```
 
 ---

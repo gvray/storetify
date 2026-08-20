@@ -90,7 +90,7 @@ store
 - `value` (StoretifyValue): Value to store (primitives, objects, arrays)
 - `expires` (number, optional): Expiration time in seconds
 
-**Returns:** `StoretifyStoreStage` for method chaining
+**Returns:** `StoretifyApi` for method chaining
 
 ---
 
@@ -110,7 +110,7 @@ const expired = store.get('old-key') // null
 
 - `key` (string): Storage key
 
-**Returns:** `StoretifySafeValue<T>` (value or null)
+**Returns:** `StoretifyValueOrNull<T>` (value or null)
 
 ---
 
@@ -126,7 +126,7 @@ store.remove('name')
 
 - `key` (string): Storage key
 
-**Returns:** `StoretifyStoreStage` for method chaining
+**Returns:** `StoretifyApi` for method chaining
 
 ---
 
@@ -267,7 +267,7 @@ Storetify is built with TypeScript and provides full type safety.
 import type { 
   Storetify,
   StoretifyValue,
-  StoretifySafeValue,
+  StoretifyValueOrNull,
   StoretifyEvent,
   StoretifyListener 
 } from 'storetify'
@@ -293,19 +293,13 @@ store.subscribe<User>('user', (event: StoretifyEvent<User>) => {
 ### Supported Types
 
 ```typescript
-type StoretifyValue = 
-  | string 
-  | number 
-  | boolean 
-  | null 
-  | JSONObject 
-  | JSONArray
-
-interface JSONObject {
-  [key: string]: StoretifyValue
-}
-
-type JSONArray = Array<StoretifyValue>
+type StoretifyValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: StoretifyValue }
+  | Array<StoretifyValue>
 ```
 
 ---

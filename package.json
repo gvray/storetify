@@ -1,6 +1,6 @@
 {
   "name": "storetify",
-  "version": "1.3.0",
+  "version": "1.7.0",
   "description": "Enhanced localStorage with expiration, subscription, and full TypeScript support",
   "main": "./dist/storetify.cjs.js",
   "module": "./dist/storetify.esm.js",

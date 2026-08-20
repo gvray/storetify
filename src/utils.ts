@@ -1,4 +1,4 @@
-import { StoretifyValue, StoretifyListener, StoretifyEvent } from './type';
+import { StoretifyValueOrNull, StoretifyListener, StoretifyEvent } from './type';
 
 const BIND_FLAG = Symbol.for('__storetify_bind_window_event_flag__');
 
@@ -19,19 +19,28 @@ export function setBindWindowEventStorage(flag: boolean) {
   (getGlobal() as any)[BIND_FLAG] = flag;
 }
 
-export function dispatchStorageEvent({
-  key,
-  newValue,
-  oldValue,
-  type,
-}: Pick<StorageEvent, 'key' | 'newValue' | 'oldValue' | 'type'>) {
-  const naturalStorageEvent = new StorageEvent(type, {
+export function dispatchStorageEvent(
+  storage: Storage,
+  { key, newValue, oldValue, type }: Pick<StorageEvent, 'key' | 'newValue' | 'oldValue' | 'type'>
+) {
+  const init: StorageEventInit = {
     key,
     newValue,
     oldValue,
     url: getGlobal()?.location?.href,
-    storageArea: localStorage,
-  });
+  };
+
+  let naturalStorageEvent: StorageEvent;
+  try {
+    naturalStorageEvent = new StorageEvent(type, {
+      ...init,
+      storageArea: storage,
+    });
+  } catch {
+    // 自定义 storage 可能不是原生 Storage 实例，此时不带 storageArea 兜底派发
+    naturalStorageEvent = new StorageEvent(type, init);
+  }
+
   getGlobal()?.dispatchEvent(naturalStorageEvent);
 }
 
@@ -47,8 +56,8 @@ export function jsonParse(data: string | null) {
 }
 
 export function each(funcs: StoretifyListener[], ev: StorageEvent, defaultKey: string | null) {
-  let newValue: StoretifyValue | null = null;
-  let oldValue: StoretifyValue | null = null;
+  let newValue: StoretifyValueOrNull = null;
+  let oldValue: StoretifyValueOrNull = null;
   try {
     newValue = jsonParse(ev.newValue)?.value ?? newValue;
     oldValue = jsonParse(ev.oldValue)?.value ?? oldValue;
@@ -78,9 +87,9 @@ export function each(funcs: StoretifyListener[], ev: StorageEvent, defaultKey: s
   });
 }
 
-export function isValidKey(key: string) {
+export function isValidKey(key: unknown): asserts key is string {
   if (typeof key !== 'string') {
-    console.warn('store failed, entry a valid string key.');
+    throw new TypeError('store key must be a string');
   }
 }
 

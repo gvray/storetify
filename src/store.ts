@@ -1,25 +1,30 @@
 import NextStorage from './NextStorage';
 import {
   Storetify,
-  StoretifyArgument,
-  StoretifyStoreStage,
+  StoretifyApi,
+  StoretifyArgs,
+  StoretifyListener,
+  StoretifySetter,
   StoretifyValue,
-  StoretifySetterFunction,
-  StoretifySafeValue,
+  StoretifyValueOrNull,
 } from './type';
 import { hasBindWindowEventStorage, setBindWindowEventStorage } from './utils';
 
 const storage = NextStorage.getInstance();
 
-function store<T = StoretifyValue>(key: string): StoretifySafeValue<T>;
-function store<T extends StoretifyValue | StoretifySetterFunction>(
+function resolveStoreValue<T = StoretifyValue>(
+  value: StoretifyValueOrNull<T> | StoretifySetter<T>
+): StoretifyValueOrNull<T> {
+  return typeof value === 'function' ? (value as StoretifySetter<T>)() : value;
+}
+
+function storeImpl<T = StoretifyValue>(key: string): StoretifyValueOrNull<T>;
+function storeImpl<T extends StoretifyValue | StoretifySetter>(
   key: string,
   value: T,
   expires?: number
-): StoretifyStoreStage;
-function store<T = StoretifyValue>(
-  ...rest: StoretifyArgument<StoretifyValue | StoretifySetterFunction>
-): StoretifySafeValue<T> | StoretifyStoreStage {
+): StoretifyApi;
+function storeImpl(...rest: StoretifyArgs): StoretifyValueOrNull | StoretifyApi {
   const len = rest.length;
   const [key, value, expires] = rest;
   if (len === 1 && typeof key === 'string') {
@@ -27,18 +32,19 @@ function store<T = StoretifyValue>(
   }
   if (len >= 2 && typeof key === 'string') {
     if (value === undefined) {
-      return storage.remove(key) as unknown as StoretifyStoreStage;
+      storage.remove(key);
+      return store;
     }
-    if (typeof value === 'function') {
-      return storage.set(key, value(), expires) as unknown as StoretifyStoreStage;
-    }
-    return storage.set(key, value, expires) as unknown as StoretifyStoreStage;
+    storage.set(key, resolveStoreValue(value as StoretifyValueOrNull | StoretifySetter), expires);
+    return store;
   }
   return null;
 }
 
+const store = storeImpl as Storetify;
+
 function init(): Storetify {
-  const skipNames = ['constructor', 'getStore'];
+  const skipNames = ['constructor', 'getStore', 'set', 'remove', 'subscribe'];
   const propertyNames = Object.getOwnPropertyNames(Object.getPrototypeOf(storage));
   propertyNames.forEach((key) => {
     if (skipNames.includes(key)) return;
@@ -49,12 +55,35 @@ function init(): Storetify {
     }
   });
 
+  // set 需要单独处理：支持惰性求值函数
+  store.set = <T = StoretifyValue>(
+    key: string,
+    value: StoretifyValueOrNull<T> | StoretifySetter<T>,
+    expires?: number
+  ): StoretifyApi => {
+    const actualValue = resolveStoreValue(value);
+    storage.set(key, actualValue, expires);
+    return store;
+  };
+
+  // remove / subscribe 底层返回 StorageEngine，但对外要返回 StoretifyApi
+  store.remove = (key: string, soft?: boolean): StoretifyApi => {
+    storage.remove(key, soft);
+    return store;
+  };
+
+  store.subscribe = (key: string, listener: StoretifyListener): StoretifyApi => {
+    storage.subscribe(key, listener);
+    return store;
+  };
+
   Object.defineProperty(store, 'storage', {
     value: storage,
     writable: false,
     configurable: false,
     enumerable: false,
   });
+
   function dispatchPublish(ev: StorageEvent) {
     const { key, newValue, oldValue, isTrusted } = ev;
     if (key !== null && newValue !== oldValue) {
@@ -69,6 +98,7 @@ function init(): Storetify {
       }
     }
   }
+
   // SP
   if (!hasBindWindowEventStorage()) {
     setBindWindowEventStorage(true);
@@ -80,7 +110,7 @@ function init(): Storetify {
     window.addEventListener('storage', handleStorageChange);
   }
 
-  return store as Storetify;
+  return store;
 }
 
 export default init();

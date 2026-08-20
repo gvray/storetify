@@ -129,25 +129,22 @@ store.subscribe("test",(e)=>{})
 对于事件变量e，是一个来自StorageEvent对象的简略对象，提供了一些实用的属性，可以很好的观察键值对的变化，如下表：
 
 ```ts
-// JSON SAFE
-export type JSONPrimitive = string | number | boolean | null
-// eslint-disable-next-line no-use-before-define
-export type StoretifyValue = JSONPrimitive | JSONObject | JSONArray
-export interface JSONObject {
-  [key: string]: StoretifyValue
-}
+export type StoretifyValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: StoretifyValue }
+  | Array<StoretifyValue>
 
-// eslint-disable-next-line no-use-before-define
-export type JSONArray = Array<StoretifyValue>
-
-export type StoretifyEventValue = StoretifyValue
+export type StoretifyValueOrNull<T = StoretifyValue> = T | null
 ```
 
 | Property | Type | Description|
 | -------- | ------ | ------------------------------------------------------------ |
 | key| `string` | 存储值的键，根据其修改、删除|
-| oldValue | `StoretifyEventValue` | 上一次的值 |
-| newValue | `StoretifyEventValue` | 当前新的值 |
+| oldValue | `StoretifyValueOrNull` | 上一次的值 |
+| newValue | `StoretifyValueOrNull` | 当前新的值 |
 | type| `string` | 事件类型 |
 | native | `StorageEvent` | 原生事件 |
 

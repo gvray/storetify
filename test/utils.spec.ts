@@ -16,14 +16,16 @@ describe('Utility Functions', () => {
   });
 
   describe('Key Validation', () => {
-    test('should warn for invalid key types', () => {
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    test('should throw for invalid key types', () => {
+      expect(() => isValidKey(123 as any)).toThrow('store key must be a string');
+      expect(() => isValidKey(null as any)).toThrow('store key must be a string');
+      expect(() => isValidKey(undefined as any)).toThrow('store key must be a string');
+      expect(() => isValidKey({} as any)).toThrow('store key must be a string');
+    });
 
-      // Test with non-string key
-      isValidKey(123 as any);
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith('store failed, entry a valid string key.');
-      consoleWarnSpy.mockRestore();
+    test('should not throw for valid string keys', () => {
+      expect(() => isValidKey('valid-key')).not.toThrow();
+      expect(() => isValidKey('')).not.toThrow();
     });
   });
 
@@ -90,7 +92,7 @@ describe('Utility Functions', () => {
 
       window.addEventListener('storage', listener);
 
-      dispatchStorageEvent({
+      dispatchStorageEvent(localStorage, {
         key: 'test-key',
         newValue: 'new',
         oldValue: 'old',
@@ -113,7 +115,7 @@ describe('Utility Functions', () => {
 
       window.addEventListener('storage', listener);
 
-      dispatchStorageEvent({
+      dispatchStorageEvent(localStorage, {
         key: null,
         newValue: null,
         oldValue: null,
@@ -135,7 +137,7 @@ describe('Utility Functions', () => {
 
       window.addEventListener('storage', listener);
 
-      dispatchStorageEvent({
+      dispatchStorageEvent(sessionStorage, {
         key: 'url-test',
         newValue: 'value',
         oldValue: null,
@@ -144,7 +146,34 @@ describe('Utility Functions', () => {
 
       const event = listener.mock.calls[0][0] as StorageEvent;
       expect(event.url).toBeDefined();
-      expect(event.storageArea).toBe(localStorage);
+      expect(event.storageArea).toBe(sessionStorage);
+
+      window.removeEventListener('storage', listener);
+    });
+
+    test('should fallback when storageArea is not a native Storage instance', () => {
+      const listener = jest.fn();
+      const customStorage = {
+        getItem: jest.fn(),
+        setItem: jest.fn(),
+        removeItem: jest.fn(),
+        clear: jest.fn(),
+        length: 0,
+        key: jest.fn(),
+      } as unknown as Storage;
+
+      window.addEventListener('storage', listener);
+
+      expect(() =>
+        dispatchStorageEvent(customStorage, {
+          key: 'fallback-test',
+          newValue: 'value',
+          oldValue: null,
+          type: 'storage',
+        })
+      ).not.toThrow();
+
+      expect(listener).toHaveBeenCalled();
 
       window.removeEventListener('storage', listener);
     });
@@ -178,7 +207,7 @@ describe('Utility Functions', () => {
       store.subscribe('parse-error', listener2);
 
       // Use dispatchStorageEvent instead of window.dispatchEvent
-      dispatchStorageEvent({
+      dispatchStorageEvent(localStorage, {
         key: 'parse-error',
         newValue: '{invalid}',
         oldValue: null,

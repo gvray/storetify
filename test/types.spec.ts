@@ -2,7 +2,7 @@ import store from '../src';
 import type {
   Storetify,
   StoretifyValue,
-  StoretifySafeValue,
+  StoretifyValueOrNull,
   StoretifyEvent,
   StoretifyListener,
 } from '../src/type';
@@ -16,22 +16,22 @@ describe('Type Safety', () => {
     test('should infer correct types for primitive values', () => {
       // String
       store('string', 'hello');
-      const stringValue: StoretifySafeValue<string> = store('string');
+      const stringValue: StoretifyValueOrNull<string> = store('string');
       expect(stringValue).toBe('hello');
 
       // Number
       store('number', 123);
-      const numberValue: StoretifySafeValue<number> = store('number');
+      const numberValue: StoretifyValueOrNull<number> = store('number');
       expect(numberValue).toBe(123);
 
       // Boolean
       store('boolean', true);
-      const booleanValue: StoretifySafeValue<boolean> = store('boolean');
+      const booleanValue: StoretifyValueOrNull<boolean> = store('boolean');
       expect(booleanValue).toBe(true);
 
       // Null
       store('null', null);
-      const nullValue: StoretifySafeValue<null> = store('null');
+      const nullValue: StoretifyValueOrNull<null> = store('null');
       expect(nullValue).toBe(null);
     });
 
@@ -39,13 +39,13 @@ describe('Type Safety', () => {
       // Object
       const obj = { name: 'test', nested: { age: 1 } };
       store('object', obj);
-      const objectValue: StoretifySafeValue = store('object');
+      const objectValue: StoretifyValueOrNull = store('object');
       expect(objectValue).toEqual(obj);
 
       // Array
       const arr = [1, 2, { a: 'b' }];
       store('array', arr);
-      const arrayValue: StoretifySafeValue = store('array');
+      const arrayValue: StoretifyValueOrNull = store('array');
       expect(arrayValue).toEqual(arr);
     });
 
@@ -63,19 +63,29 @@ describe('Type Safety', () => {
 
     test('should support typed function values', () => {
       store('lazy', () => 'computed');
-      const lazyValue: StoretifySafeValue<string> = store('lazy');
+      const lazyValue: StoretifyValueOrNull<string> = store('lazy');
       expect(lazyValue).toBe('computed');
 
       store('lazyObj', () => ({ computed: true }));
-      const lazyObj: StoretifySafeValue = store('lazyObj');
+      const lazyObj: StoretifyValueOrNull = store('lazyObj');
+      expect(lazyObj).toEqual({ computed: true });
+    });
+
+    test('should support typed function values via store.set()', () => {
+      store.set('lazy-set', () => 'computed');
+      const lazyValue: StoretifyValueOrNull<string> = store.get('lazy-set');
+      expect(lazyValue).toBe('computed');
+
+      store.set('lazy-set-obj', () => ({ computed: true }));
+      const lazyObj: StoretifyValueOrNull = store.get('lazy-set-obj');
       expect(lazyObj).toEqual({ computed: true });
     });
   });
 
   describe('Return Types', () => {
-    test('should return StoretifySafeValue from get operations', () => {
+    test('should return StoretifyValueOrNull from get operations', () => {
       store.set('foo', 'bar');
-      const val: StoretifySafeValue<string> = store.get<string>('foo');
+      const val: StoretifyValueOrNull<string> = store.get<string>('foo');
       expect(val).toBe('bar');
     });
 
@@ -155,7 +165,7 @@ describe('Type Safety', () => {
   describe('Function Overloads', () => {
     test('should support store(key) overload', () => {
       store.set('overload-test', 'value');
-      const result: StoretifySafeValue = store('overload-test');
+      const result: StoretifyValueOrNull = store('overload-test');
       expect(result).toBe('value');
     });
 
@@ -239,7 +249,7 @@ describe('Type Safety', () => {
 
   describe('Custom Type Helpers', () => {
     test('should work with custom typed helper functions', () => {
-      function typedSet<T extends StoretifyValue>(key: string, value: T): StoretifySafeValue<T> {
+      function typedSet<T extends StoretifyValue>(key: string, value: T): StoretifyValueOrNull<T> {
         store(key, value);
         return store(key);
       }
@@ -274,7 +284,7 @@ describe('Type Safety', () => {
 
       // All these should compile without errors
       storetify.set('compile-test', 'value');
-      const val: StoretifySafeValue = storetify.get('compile-test');
+      const val: StoretifyValueOrNull = storetify.get('compile-test');
       const exists: boolean = storetify.has('compile-test');
       const used: string = storetify.getUsed();
       const observers: StoretifyListener[] = storetify.getObserver('compile-test');

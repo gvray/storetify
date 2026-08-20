@@ -85,6 +85,19 @@ describe('Core API', () => {
       store('lazy-obj', () => ({ computed: true }));
       expect(store('lazy-obj')).toEqual({ computed: true });
     });
+
+    test('should support function values via store.set()', () => {
+      store.set('lazy-set', () => 'computed');
+      expect(store.get('lazy-set')).toBe('computed');
+
+      store.set('lazy-set-obj', () => ({ computed: true }));
+      expect(store.get('lazy-set-obj')).toEqual({ computed: true });
+    });
+
+    test('should support function values with expiration via store.set()', () => {
+      store.set('lazy-set-expire', () => 'computed', 1);
+      expect(store.get('lazy-set-expire')).toBe('computed');
+    });
   });
 
   describe('Namespace Management', () => {
@@ -102,6 +115,18 @@ describe('Core API', () => {
 
       expect(used).toMatch(/KB$/);
       expect(parseFloat(used)).toBeGreaterThan(0);
+    });
+
+    test('should calculate byte size for non-ASCII characters', () => {
+      store.set('usage-test-ascii', 'aaaa');
+      const asciiUsed = parseFloat(store.getUsed());
+
+      store.clear();
+      store.set('usage-test-unicode', '中文字符');
+      const unicodeUsed = parseFloat(store.getUsed());
+
+      // 中文 UTF-8 每个字符占 3 字节，所以 unicodeUsed 应该明显大于 asciiUsed
+      expect(unicodeUsed).toBeGreaterThan(asciiUsed);
     });
 
     test('should get observers for a key', () => {

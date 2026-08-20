@@ -1,10 +1,10 @@
-import { StoretifyValue, StoretifyListener } from './type';
+import { StorageEngine, StoretifyValue, StoretifyListener } from './type';
 import { dispatchStorageEvent, each, getGlobal, isValidKey, jsonParse } from './utils';
 /**
  * NextStorage
  * Next localStorage
  */
-class NextStorage {
+class NextStorage implements StorageEngine {
   namespace = 'storetify';
 
   protected observers = new Map<string, StoretifyListener[]>();
@@ -37,8 +37,8 @@ class NextStorage {
     for (let i = 0; i < store.length; i++) {
       const key = store.key(i);
       if (key) {
-        const value = store.getItem(key);
-        totalSize += key.length + (value?.length || 0);
+        const value = store.getItem(key) ?? '';
+        totalSize += new Blob([key]).size + new Blob([value]).size;
       }
     }
     const storageUsed = totalSize / 1024;
@@ -53,12 +53,23 @@ class NextStorage {
     return this.store;
   }
 
+  private readStored(key: string): { value: StoretifyValue; raw: string; expired: boolean } | null {
+    const val = this.getStore().getItem(key);
+    if (val === null) return null;
+
+    const parsed = jsonParse(val);
+    if (!parsed) return null;
+
+    const expired = !!(parsed.expires && Date.now() > parsed.expires);
+    return { value: parsed.value, raw: val, expired };
+  }
+
   public set<T = StoretifyValue>(key: string, value: T, expires?: number) {
     isValidKey(key);
     const val = JSON.stringify({ value, expires: expires ? expires * 1000 + Date.now() : expires });
     try {
       const oldValue = this.getItem(key);
-      dispatchStorageEvent({ key, newValue: val, oldValue, type: 'storage' });
+      dispatchStorageEvent(this.getStore(), { key, newValue: val, oldValue, type: 'storage' });
     } finally {
       this.getStore().setItem(key, val);
     }
@@ -66,37 +77,25 @@ class NextStorage {
   }
 
   public get<T = StoretifyValue>(key: string): T | null {
-    const val = this.getStore().getItem(key) ?? null;
-    if (val === null) {
-      return val;
+    const stored = this.readStored(key);
+    if (!stored) return null;
+    if (stored.expired) {
+      // only del store key without listeners
+      this.remove(key, true);
+      return null;
     }
-    const parsed = jsonParse(val);
-    if (parsed && (!parsed.expires || Date.now() <= parsed.expires)) {
-      return parsed.value;
-    }
-    // only del store key without listeners
-    this.remove(key, true);
-    return null;
+    return stored.value as T;
   }
 
   public getItem(key: string): string | null {
-    const val = this.getStore().getItem(key) ?? null;
-    if (val === null) {
-      return val;
-    }
-    const parsed = jsonParse(val);
-    if (parsed && (!parsed.expires || Date.now() <= parsed.expires)) {
-      return val;
-    }
-    // this.remove(key) only read value
-    return null;
+    const stored = this.readStored(key);
+    if (!stored || stored.expired) return null;
+    return stored.raw;
   }
 
   public has(key: string): boolean {
-    const val = this.getStore().getItem(key) ?? null;
-    if (val === null) return false;
-    const parsed = jsonParse(val);
-    return parsed !== null && (!parsed.expires || Date.now() <= parsed.expires);
+    const stored = this.readStored(key);
+    return stored !== null && !stored.expired;
   }
 
   public publish(
@@ -173,7 +172,7 @@ class NextStorage {
 
   public remove(key: string, soft?: boolean) {
     const oldValue = this.getStore().getItem(key) ?? null;
-    dispatchStorageEvent({ key, newValue: null, oldValue, type: 'storage' });
+    dispatchStorageEvent(this.getStore(), { key, newValue: null, oldValue, type: 'storage' });
     if (soft !== true) {
       this.unsubscribe(key);
     }
@@ -182,7 +181,12 @@ class NextStorage {
   }
 
   public clear() {
-    dispatchStorageEvent({ key: null, newValue: null, oldValue: null, type: 'storage' });
+    dispatchStorageEvent(this.getStore(), {
+      key: null,
+      newValue: null,
+      oldValue: null,
+      type: 'storage',
+    });
     // go dispatchPublish storage.unsubscribe()
     // this.unsubscribe()
     this.getStore().clear();
